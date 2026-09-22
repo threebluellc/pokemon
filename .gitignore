@@ -21,3 +21,6 @@ supabase/.env.*
 
 # Private design mockups (kept local, not published)
 design/
+
+# Stray downloads from debugging
+b.js
