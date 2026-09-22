@@ -200,22 +200,79 @@ begin
   perform public.rls_record(17, 'C sees the incoming request itself', '1', n::text);
 
   ---------------------------------------------------------------- act as a signed-out visitor
-  execute 'set local role anon';
-  perform set_config('request.jwt.claims', '', true);
+  -- A signed-out visitor holds no privileges on these tables at all, so Postgres
+  -- refuses the query before Row Level Security is even consulted. That is a
+  -- stronger result than "returned no rows", so either outcome counts as a pass
+  -- and only actual rows coming back is a failure.
+  begin
+    execute 'set local role anon';
+    perform set_config('request.jwt.claims', '', true);
+    select count(*) into n from public.portfolio_items;
+    execute 'reset role';
+    perform public.rls_record(18, 'Signed-out visitor gets no cards', 'no access',
+      case when n = 0 then 'no access' else 'LEAKED ' || n || ' rows' end);
+  exception when insufficient_privilege then
+    execute 'reset role';
+    perform public.rls_record(18, 'Signed-out visitor gets no cards', 'no access', 'no access');
+  end;
 
-  select count(*) into n from public.portfolio_items;
-  execute 'reset role';
-  perform public.rls_record(18, 'Signed-out visitor sees no cards', '0', n::text);
+  begin
+    execute 'set local role anon';
+    perform set_config('request.jwt.claims', '', true);
+    select count(*) into n from public.profiles;
+    execute 'reset role';
+    perform public.rls_record(19, 'Signed-out visitor gets no profiles', 'no access',
+      case when n = 0 then 'no access' else 'LEAKED ' || n || ' rows' end);
+  exception when insufficient_privilege then
+    execute 'reset role';
+    perform public.rls_record(19, 'Signed-out visitor gets no profiles', 'no access', 'no access');
+  end;
 
-  execute 'set local role anon';
-  select count(*) into n from public.profiles;
-  execute 'reset role';
-  perform public.rls_record(19, 'Signed-out visitor sees no profiles', '0', n::text);
+  begin
+    execute 'set local role anon';
+    perform set_config('request.jwt.claims', '', true);
+    select count(*) into n from public.cards_cache;
+    execute 'reset role';
+    perform public.rls_record(20, 'Signed-out visitor gets no card data', 'no access',
+      case when n = 0 then 'no access' else 'LEAKED ' || n || ' rows' end);
+  exception when insufficient_privilege then
+    execute 'reset role';
+    perform public.rls_record(20, 'Signed-out visitor gets no card data', 'no access', 'no access');
+  end;
 
-  execute 'set local role anon';
-  select count(*) into n from public.cards_cache;
-  execute 'reset role';
-  perform public.rls_record(20, 'Signed-out visitor sees no card data', '0', n::text);
+  ---------------------------------------------------------------- username rules
+  -- B tries to take the username A already has.
+  begin
+    execute 'set local role authenticated';
+    perform set_config('request.jwt.claims',
+      json_build_object('sub', b_id, 'role', 'authenticated')::text, true);
+    update public.profiles set username = 'rlstest_a' where id = b_id;
+    execute 'reset role';
+    perform public.rls_record(21, 'Two people cannot share a username', 'blocked', 'allowed');
+  exception when unique_violation then
+    execute 'reset role';
+    perform public.rls_record(21, 'Two people cannot share a username', 'blocked', 'blocked');
+  end;
+
+  -- Capitals and punctuation are refused by the database, not just by the app.
+  -- The claims have to be set again here: the block above ended in a caught
+  -- exception, which rolled back the identity it had set.
+  begin
+    execute 'set local role authenticated';
+    perform set_config('request.jwt.claims',
+      json_build_object('sub', b_id, 'role', 'authenticated')::text, true);
+    update public.profiles set username = 'Bad-Name!' where id = b_id;
+    get diagnostics affected = row_count;
+    execute 'reset role';
+    -- No exception was raised. Either the bad name was accepted, or no row
+    -- matched and the constraint was never exercised. Report which, rather
+    -- than claiming a pass we did not earn.
+    perform public.rls_record(22, 'Username format is enforced in the database', 'blocked',
+      case when affected = 0 then 'INCONCLUSIVE: no row matched' else 'allowed' end);
+  exception when check_violation then
+    execute 'reset role';
+    perform public.rls_record(22, 'Username format is enforced in the database', 'blocked', 'blocked');
+  end;
 
   ---------------------------------------------------------------- clean up
   perform set_config('request.jwt.claims', '', true);

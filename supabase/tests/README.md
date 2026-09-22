@@ -6,8 +6,13 @@ allow. These checks prove it does.
 
 ## How to run
 
-Supabase dashboard → **SQL Editor** → **New query** → paste all of
-[`rls_test.sql`](rls_test.sql) → **Run**.
+From the project folder, against the linked project:
+
+```
+supabase db query --linked -f supabase/tests/rls_test.sql
+```
+
+Or paste the file into the Supabase dashboard → **SQL Editor** → **New query** → **Run**.
 
 It creates three throwaway users (A, B and C), makes A and B accepted friends,
 leaves A's request to C pending, then tries every read and write from each of
@@ -42,9 +47,20 @@ drop table public.rls_test_results;
 | 15 | C gets nothing from A while pending | Checked from the other side too |
 | 16 | C has no friends while pending | Checked from the other side too |
 | 17 | C does see the incoming request | Requests still arrive |
-| 18 | Signed-out visitor sees no cards | Nothing is public |
-| 19 | Signed-out visitor sees no profiles | Nothing is public |
-| 20 | Signed-out visitor sees no card data | Nothing is public |
+| 18 | Signed-out visitor gets no cards | Nothing is public |
+| 19 | Signed-out visitor gets no profiles | Nothing is public |
+| 20 | Signed-out visitor gets no card data | Nothing is public |
+| 21 | Two people cannot share a username | Usernames identify people |
+| 22 | Username format enforced in the database | Not only in the app |
+
+### A note on checks 18–20
+
+Signed-out visitors are blocked twice over: they hold no privileges on these
+tables *and* no policy would match them. Postgres therefore refuses the query
+outright rather than returning an empty list, and the test treats both as a pass.
+
+If Postgres ever suggests `GRANT SELECT ... TO anon` to make an error go away,
+do not do it. That removes the first of those two layers.
 
 ## Also checked live, from the browser
 
