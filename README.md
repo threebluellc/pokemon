@@ -3,7 +3,7 @@
 A mobile-first web app (installable on iPhone via Safari → Share → Add to Home Screen) for scanning
 Pokémon cards and tracking what they are worth.
 
-Live site: https://threeblue.github.io/pokemon/
+Live site: https://threebluellc.github.io/pokemon/
 
 Status: Phase 0 (scaffold + deploy). A full setup guide comes in Phase 5.
 

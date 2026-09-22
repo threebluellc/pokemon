@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-// GitHub Pages serves the site from https://threeblue.github.io/pokemon/
+// GitHub Pages serves the site from https://threebluellc.github.io/pokemon/
 const base = '/pokemon/'
 
 export default defineConfig({

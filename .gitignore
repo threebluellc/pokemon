@@ -18,3 +18,6 @@ supabase/.env.*
 
 # Local preview-tool config
 .claude
+
+# Private design mockups (kept local, not published)
+design/
