@@ -5,9 +5,21 @@
     calc(var(--safe-left) + 20px);
 }
 
+/* Sign-in and other single-purpose screens: no tab bar, content centred. */
+.screen-centered {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-bottom: calc(var(--safe-bottom) + 24px);
+}
+
 .title {
   font-size: 28px;
   letter-spacing: -0.01em;
+}
+
+.subtitle {
+  margin: 6px 0 24px;
 }
 
 .big-number {
