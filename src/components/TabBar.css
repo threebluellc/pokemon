@@ -35,8 +35,21 @@
 }
 
 .tab:disabled {
-  opacity: 0.45;
   cursor: default;
+}
+
+/* While a refresh runs the button is not tappable, but it is showing live
+   progress, so it must not look greyed out. */
+.tab:disabled:not(:has(.progress-ring)) {
+  opacity: 0.45;
+}
+
+.tab:disabled:has(.progress-ring) {
+  color: var(--accent);
+}
+
+.progress-ring circle:last-child {
+  transition: stroke-dashoffset 0.25s ease-out;
 }
 
 /* Raised 56px round camera button */

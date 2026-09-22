@@ -50,6 +50,34 @@ export const RefreshIcon = () => (
   </Icon>
 )
 
+export const FilterIcon = () => (
+  <Icon size={22}>
+    <path d="M4 7h10M18 7h2M4 12h4M12 12h8M4 17h9M17 17h3" />
+    <circle cx="16" cy="7" r="2" />
+    <circle cx="10" cy="12" r="2" />
+    <circle cx="15" cy="17" r="2" />
+  </Icon>
+)
+
+export const SearchIcon = () => (
+  <Icon size={20}>
+    <circle cx="11" cy="11" r="6.5" />
+    <path d="M15.8 15.8L20 20" />
+  </Icon>
+)
+
+export const BackIcon = () => (
+  <Icon size={22}>
+    <path d="M15 5l-7 7 7 7" />
+  </Icon>
+)
+
+export const CheckIcon = () => (
+  <Icon size={16}>
+    <path d="M5 12.5l4.5 4.5L19 7" />
+  </Icon>
+)
+
 export const CloseIcon = () => (
   <Icon size={20}>
     <path d="M6 6l12 12M18 6L6 18" />

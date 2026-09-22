@@ -1,0 +1,85 @@
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-card);
+  color: var(--text);
+  text-align: left;
+}
+
+.tile-art {
+  display: block;
+  /* Real cards are 5:7 */
+  aspect-ratio: 5 / 7;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  overflow: hidden;
+  /* Flat tint holds the space while the image loads */
+  background: var(--raised);
+}
+
+.tile-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.tile-name {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.tile-meta {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.tile-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 10px;
+}
+
+.badge {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--raised);
+  border: 1px solid var(--border-control);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.badge-accent {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  color: var(--accent);
+}
+
+.tile-footer {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.tile-price {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.tile-qty {
+  color: var(--muted);
+  font-size: 13px;
+}

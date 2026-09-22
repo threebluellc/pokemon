@@ -1,0 +1,33 @@
+.detail-header {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.detail-art {
+  flex: none;
+  width: 104px;
+  height: 146px;
+  object-fit: cover;
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.detail-name {
+  font-size: 24px;
+  line-height: 1.15;
+  margin-bottom: 4px;
+}
+
+.button-danger {
+  width: 100%;
+  min-height: var(--touch-min);
+  margin-top: 10px;
+  padding: 13px;
+  background: none;
+  border: 1px solid color-mix(in srgb, #ff8a80 45%, transparent);
+  border-radius: var(--radius-input);
+  color: #ffc7c1;
+  font-size: 16px;
+  font-weight: 500;
+}
