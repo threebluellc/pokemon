@@ -1,0 +1,37 @@
+.install-hint {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: calc(var(--tabbar-height) + 28px);
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 6px 10px 16px;
+  background: var(--raised);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-card);
+  font-size: 14px;
+}
+
+.install-hint p {
+  margin: 0;
+  flex: 1;
+  line-height: 1.6;
+}
+
+.install-hint svg {
+  vertical-align: -5px;
+  color: var(--accent);
+}
+
+.install-hint-close {
+  flex: none;
+  width: var(--touch-min);
+  height: var(--touch-min);
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+  color: var(--muted);
+}

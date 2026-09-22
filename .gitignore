@@ -1,0 +1,20 @@
+node_modules
+dist
+dev-dist
+*.local
+*.tsbuildinfo
+
+# Real env files must never be committed. Only the placeholder file is.
+.env
+.env.*
+!.env.example
+
+# Supabase CLI local state and secrets
+supabase/.temp
+supabase/.branches
+supabase/.env
+supabase/.env.*
+!supabase/.env.example
+
+# Local preview-tool config
+.claude

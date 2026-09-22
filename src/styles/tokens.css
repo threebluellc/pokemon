@@ -1,0 +1,43 @@
+/* Design tokens. Change --accent here to try another accent color
+   (alternatives: #4FD1B0, #A58BFF, #F5B942). */
+:root {
+  --accent: #6a9bff;
+  --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+  --on-accent: #0a0f1e;
+
+  --bg: #0d1017;
+  --surface: #161b26;
+  --raised: #1e2432;
+  --border-card: #232a3a;
+  --border-control: #2a3142;
+  --text: #eef1f7;
+  --muted: #9aa3b5;
+
+  /* Pokémon type dots */
+  --type-grass: #6fb56a;
+  --type-fire: #e8683c;
+  --type-water: #4c9be0;
+  --type-lightning: #f2cb3d;
+  --type-psychic: #a36be0;
+  --type-fighting: #c0703a;
+  --type-darkness: #5d6478;
+  --type-metal: #98a4b5;
+  --type-dragon: #c8a44a;
+  --type-colorless: #d9dde5;
+
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+
+  --radius-card: 16px;
+  --radius-input: 14px;
+  --radius-chip: 24px;
+  --radius-sheet: 24px;
+
+  --tabbar-height: 88px;
+  --touch-min: 44px;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
