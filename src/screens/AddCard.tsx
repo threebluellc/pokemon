@@ -1,10 +1,11 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { CardArt } from '../components/CardArt'
 import { ConfirmCard } from '../components/ConfirmCard'
 import { BackIcon, SearchIcon } from '../components/Icons'
 import { getCards, searchCards } from '../lib/api'
 import { usePortfolio } from '../lib/usePortfolio'
-import { cardImage, cardNumber, type CachedCard, type SearchHit } from '../lib/types'
+import { cardNumber, type CachedCard, type SearchHit } from '../lib/types'
 import '../components/Chips.css'
 import '../components/Form.css'
 import './AddCard.css'
@@ -126,7 +127,7 @@ export function AddCard() {
               <li key={hit.card_id}>
                 <button type="button" className="result-row" disabled={busy} onClick={() => void choose(hit)}>
                   <span className="result-art">
-                    {cardImage(hit, 'low') && <img src={cardImage(hit, 'low')!} alt="" loading="lazy" />}
+                    <CardArt card={hit} size="low" />
                   </span>
                   <span className="result-text">
                     <span className="result-name">{hit.name}</span>

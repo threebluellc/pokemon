@@ -35,8 +35,12 @@ export type SearchHit = {
 export type SetInfo = {
   name: string
   printedTotal: number | null
-  releaseDate: string | null
-  abbreviation: string | null
+  /**
+   * Position in TCGdex's set list, which is ordered oldest to newest. The list
+   * endpoint carries no release date, so this is our recency signal; a higher
+   * number means a more recent set.
+   */
+  order: number
 }
 
 // One instance of the function serves many requests, so holding the set list in
@@ -54,28 +58,15 @@ async function loadSetIndex() {
   if (setIndex && Date.now() - setIndex.at < SET_INDEX_MAX_AGE_MS) return setIndex
 
   const [allSets, pocketSeries] = await Promise.all([
-    getJson('/sets') as Promise<
-      Array<{
-        id: string
-        name: string
-        cardCount?: { official?: number }
-        releaseDate?: string
-        abbreviation?: { official?: string }
-      }>
-    >,
+    getJson('/sets') as Promise<Array<{ id: string; name: string; cardCount?: { official?: number } }>>,
     // The mobile game's cards share the API but are not real cards, so we drop them.
     getJson('/series/tcgp') as Promise<{ sets?: Array<{ id: string }> }>,
   ])
 
   const sets = new Map<string, SetInfo>()
-  for (const s of allSets) {
-    sets.set(s.id, {
-      name: s.name,
-      printedTotal: s.cardCount?.official ?? null,
-      releaseDate: s.releaseDate ?? null,
-      abbreviation: s.abbreviation?.official ?? null,
-    })
-  }
+  allSets.forEach((s, index) => {
+    sets.set(s.id, { name: s.name, printedTotal: s.cardCount?.official ?? null, order: index })
+  })
 
   const pocket = new Set<string>((pocketSeries.sets ?? []).map((s) => s.id))
   setIndex = { at: Date.now(), sets, pocket }
@@ -87,10 +78,31 @@ export function setIdOf(cardId: string): string {
   return cardId.slice(0, cardId.lastIndexOf('-'))
 }
 
-/** Set details used when ranking candidates. Served from the in-memory index. */
+/** Set name, printed total and recency. Served from the in-memory index. */
 export async function setMeta(setId: string): Promise<SetInfo | null> {
   const index = await loadSetIndex()
   return index.sets.get(setId) ?? null
+}
+
+// The set list has no short codes, so those need a call per set. Worth it only
+// for a handful of candidates, and remembered for the life of the instance.
+const abbreviations = new Map<string, string | null>()
+
+/** The set's printed code, such as BLK or JTG. One request per set, then cached. */
+export async function setAbbreviation(setId: string): Promise<string | null> {
+  const known = abbreviations.get(setId)
+  if (known !== undefined) return known
+  try {
+    const detail = (await getJson(`/sets/${encodeURIComponent(setId)}`)) as {
+      abbreviation?: { official?: string }
+    }
+    const code = detail.abbreviation?.official ?? null
+    abbreviations.set(setId, code)
+    return code
+  } catch {
+    abbreviations.set(setId, null)
+    return null
+  }
 }
 
 export async function searchCards(name: string, setFilter?: string, numberFilter?: string): Promise<SearchHit[]> {
@@ -115,15 +127,22 @@ export async function searchCards(name: string, setFilter?: string, numberFilter
       const setId = setIdOf(c.id)
       const info = index.sets.get(setId)
       return {
-        card_id: c.id,
-        name: c.name,
-        set_id: setId,
-        set_name: info?.name ?? setId,
-        number: c.localId,
-        printed_total: info?.printedTotal ?? null,
-        image_url: c.image ?? null,
+        hit: {
+          card_id: c.id,
+          name: c.name,
+          set_id: setId,
+          set_name: info?.name ?? setId,
+          number: c.localId,
+          printed_total: info?.printedTotal ?? null,
+          image_url: c.image ?? null,
+        },
+        order: info?.order ?? -1,
       }
     })
+    // Newest sets first. TCGdex returns no useful order, which otherwise buries
+    // a current card under decade-old promos and trainer kits.
+    .sort((a, b) => b.order - a.order)
+    .map((entry) => entry.hit)
 }
 
 /** Full card detail including current TCGplayer prices. */

@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { removeItem, updateItem } from '../lib/api'
 import { formatAsOf } from '../lib/portfolio'
-import { cardImage, cardNumber, type Condition, type PortfolioItem, type Printing } from '../lib/types'
+import { cardNumber, type Condition, type PortfolioItem, type Printing } from '../lib/types'
+import { CardArt } from './CardArt'
 import { CardOptions } from './CardOptions'
 import { Sheet } from './Sheet'
 import './Form.css'
@@ -24,7 +25,6 @@ export function CardDetailSheet({
   const [confirmRemove, setConfirmRemove] = useState(false)
 
   const card = item.card
-  const image = cardImage(card, 'low')
   const changed = printing !== item.printing || condition !== item.condition || quantity !== item.quantity
 
   async function save() {
@@ -60,7 +60,7 @@ export function CardDetailSheet({
   return (
     <Sheet title={card.name} onClose={onClose}>
       <header className="detail-header">
-        {image && <img className="detail-art" src={image} alt="" />}
+        <CardArt card={card} size="low" className="detail-art" />
         <div>
           <h2 className="detail-name">{card.name}</h2>
           <p className="muted">

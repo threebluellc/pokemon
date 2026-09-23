@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ConfirmCard } from '../components/ConfirmCard'
 import { BoltIcon, LibraryIcon, StackIcon } from '../components/Icons'
 import { identifyCard, ProxyError } from '../lib/api'
+import { acquireCamera, currentStream, releaseCameraSoon } from '../lib/cameraStream'
 import { captureFromFile, captureFromVideo } from '../lib/image'
 import type { CachedCard } from '../lib/types'
 import { usePortfolio } from '../lib/usePortfolio'
@@ -24,18 +25,12 @@ export function Camera() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const frameRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
-  const streamRef = useRef<MediaStream | null>(null)
 
-  const [stage, setStage] = useState<Stage>({ name: 'starting' })
+  const [stage, setStage] = useState<Stage>(() => (currentStream() ? { name: 'live' } : { name: 'starting' }))
   const [batch, setBatch] = useState(false)
   const [added, setAdded] = useState(0)
   const [toast, setToast] = useState<string | null>(null)
   const [torch, setTorch] = useState<{ on: boolean } | null>(null)
-
-  const stopCamera = useCallback(() => {
-    streamRef.current?.getTracks().forEach((track) => track.stop())
-    streamRef.current = null
-  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -46,15 +41,10 @@ export function Camera() {
         return
       }
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: 'environment' } },
-          audio: false,
-        })
-        if (cancelled) {
-          stream.getTracks().forEach((t) => t.stop())
-          return
-        }
-        streamRef.current = stream
+        // Reuses the stream from a previous visit when there is one, so moving
+        // between tabs does not set off another permission prompt.
+        const stream = await acquireCamera()
+        if (cancelled) return
         if (videoRef.current) videoRef.current.srcObject = stream
 
         // Torch is rare on iPhone Safari, so the button only appears where it works.
@@ -74,12 +64,12 @@ export function Camera() {
     void start()
     return () => {
       cancelled = true
-      stopCamera()
+      releaseCameraSoon()
     }
-  }, [stopCamera])
+  }, [])
 
   async function toggleTorch() {
-    const track = streamRef.current?.getVideoTracks()[0]
+    const track = currentStream()?.getVideoTracks()[0]
     if (!track || !torch) return
     const next = !torch.on
     try {
@@ -166,6 +156,10 @@ export function Camera() {
       <main className="screen">
         <h1 className="title">Add a card</h1>
         <p className="muted subtitle">{stage.reason}</p>
+        <p className="muted subtitle">
+          If you tapped Don&apos;t Allow, open iPhone Settings, find this app under Safari, and turn the
+          camera back on.
+        </p>
         <label className="button-primary file-button">
           Choose a photo
           <input

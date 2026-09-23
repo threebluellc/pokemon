@@ -5,7 +5,7 @@
 
 import Anthropic from 'npm:@anthropic-ai/sdk@0.127.0'
 import { adminClient, callerId, corsHeaders, getOrFetchCards, json, must } from '../_shared/http.ts'
-import { searchCards, setIdOf, setMeta, type CardRow, type SearchHit } from '../_shared/tcgdex.ts'
+import { searchCards, setAbbreviation, setIdOf, setMeta, type CardRow, type SearchHit } from '../_shared/tcgdex.ts'
 
 /** Scans one person may run per day, so a bug or misuse cannot run up the bill. */
 const DAILY_SCAN_LIMIT = 150
@@ -33,7 +33,7 @@ Reply with exactly one JSON object and nothing else:
 {"name": string, "collector_number": string or null, "set_name_or_code": string or null, "confidence": number, "is_pokemon_card": boolean}
 
 - name: the card name exactly as printed, without the HP or any symbols.
-- collector_number: the small number usually near the bottom, such as "116/086" or "042". Use null if you cannot read it.
+- collector_number: the small number usually near the bottom, such as "116/086" or "042". Give it exactly as printed, including the part after the slash. If you cannot read it clearly, use null. Never guess it and never substitute another number from the card, such as the HP, the year, or the illustrator's number: a wrong number is far worse than none.
 - set_name_or_code: the set name, or its short code if that is what is shown. Use null if absent.
 - confidence: between 0 and 1, covering the name and the number together.
 - is_pokemon_card: false if this photo is not a Pokémon trading card.
@@ -106,8 +106,11 @@ Deno.serve(async (req) => {
     let read = result.read
     let hits = read?.is_pokemon_card ? await findHits(read) : []
 
-    // Escalate once when the cheap read was unsure or matched nothing at all.
-    const needsRetry = !read || (read.is_pokemon_card && (read.confidence < CONFIDENCE_FLOOR || hits.length === 0))
+    // Escalate once when the cheap read looks shaky. Without a trustworthy
+    // collector number a common name like Tyranitar matches fifty cards and the
+    // answer is close to a guess, so the stronger model earns its fraction of a
+    // cent. A number that matches none of the hits is itself a sign of a misread.
+    const needsRetry = !read || (read.is_pokemon_card && (read.confidence < CONFIDENCE_FLOOR || !numberIsSound(read, hits)))
     if (needsRetry) {
       const second = await readCard(anthropic, RETRY_MODEL, image)
       costUsd += second.costUsd
@@ -271,25 +274,32 @@ async function rankHits(hits: SearchHit[], read: CardRead): Promise<SearchHit[]>
   const setHint = read.set_name_or_code?.toLowerCase().trim()
   const name = read.name.toLowerCase()
 
-  const metas = new Map(
-    await Promise.all(
-      [...new Set(hits.map((hit) => setIdOf(hit.card_id)))].map(
-        async (setId) => [setId, await setMeta(setId)] as const,
-      ),
-    ),
-  )
+  const setIds = [...new Set(hits.map((hit) => setIdOf(hit.card_id)))]
+  const metas = new Map(await Promise.all(setIds.map(async (id) => [id, await setMeta(id)] as const)))
+
+  // Short set codes need a request each, so only look them up when the model
+  // actually read one and the field has already narrowed to a few sets.
+  const codes = new Map<string, string | null>()
+  if (setHint && setIds.length <= 6) {
+    for (const [id, code] of await Promise.all(
+      setIds.map(async (id) => [id, await setAbbreviation(id)] as const),
+    )) {
+      codes.set(id, code)
+    }
+  }
 
   const scored = hits.map((hit) => {
-    const meta = metas.get(setIdOf(hit.card_id)) ?? null
+    const setId = setIdOf(hit.card_id)
+    const meta = metas.get(setId) ?? null
     let score = 0
 
     if (number && hit.number.replace(/^0+/, '') === number) score += 4
-    // The strongest single clue, and cheap: it pins down the set.
+    // The strongest single clue, and free: it pins down the set.
     if (printedTotal != null && hit.printed_total === printedTotal) score += 5
 
     if (setHint) {
       const setName = hit.set_name.toLowerCase()
-      const code = meta?.abbreviation?.toLowerCase()
+      const code = codes.get(setId)?.toLowerCase()
       // The model often reads a code like "BLK EN", so match either direction.
       if (setName.includes(setHint) || setHint.includes(setName)) score += 3
       else if (code && (setHint === code || setHint.split(/\s+/).includes(code))) score += 3
@@ -297,13 +307,22 @@ async function rankHits(hits: SearchHit[], read: CardRead): Promise<SearchHit[]>
 
     if (hit.name.toLowerCase() === name) score += 1
 
-    return { hit, score, releaseDate: meta?.releaseDate ?? '' }
+    return { hit, score, order: meta?.order ?? -1 }
   })
 
-  scored.sort((a, b) => b.score - a.score || b.releaseDate.localeCompare(a.releaseDate))
+  // Equal scores go to the more recent set: someone photographing a card today
+  // is far likelier to hold a current one than a 2001 promo.
+  scored.sort((a, b) => b.score - a.score || b.order - a.order)
   return scored.map((entry) => entry.hit)
 }
 
 function round6(value: number): number {
   return Math.round(value * 1_000_000) / 1_000_000
+}
+
+/** True when we read a collector number and at least one candidate actually has it. */
+function numberIsSound(read: CardRead, hits: SearchHit[]): boolean {
+  const { number } = splitNumber(read.collector_number)
+  if (!number) return false
+  return hits.some((hit) => hit.number.replace(/^0+/, '') === number)
 }

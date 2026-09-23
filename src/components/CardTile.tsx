@@ -1,16 +1,16 @@
 import { priceOf } from '../lib/portfolio'
-import { cardImage, cardNumber, PRINTING_LABELS, type PortfolioItem } from '../lib/types'
+import { cardNumber, PRINTING_LABELS, type PortfolioItem } from '../lib/types'
+import { CardArt } from './CardArt'
 import './CardTile.css'
 
 export function CardTile({ item, onOpen }: { item: PortfolioItem; onOpen: () => void }) {
   const card = item.card
   const price = priceOf(item)
-  const image = cardImage(card, 'low')
 
   return (
     <button type="button" className="tile" onClick={onOpen}>
       <span className="tile-art">
-        {image && <img src={image} alt="" loading="lazy" decoding="async" />}
+        <CardArt card={card} size="low" />
       </span>
 
       <span className="tile-name">{card.name}</span>

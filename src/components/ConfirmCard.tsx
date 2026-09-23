@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { addToPortfolio } from '../lib/api'
 import { useAuth } from '../lib/auth'
-import { cardImage, cardNumber, TYPE_COLORS, type CachedCard, type Condition, type Printing } from '../lib/types'
+import { cardNumber, TYPE_COLORS, type CachedCard, type Condition, type Printing } from '../lib/types'
+import { CardArt } from './CardArt'
 import { CardOptions, likeliestPrinting } from './CardOptions'
 import { BackIcon, CheckIcon } from './Icons'
 import './Form.css'
@@ -75,7 +76,6 @@ function ConfirmOne({
   const [error, setError] = useState<string | null>(null)
 
   const price = card.prices?.[printing]
-  const image = cardImage(card, 'high')
 
   async function add() {
     setBusy(true)
@@ -103,7 +103,7 @@ function ConfirmOne({
       </header>
 
       <div className="detail-header">
-        {image && <img className="detail-art" src={image} alt="" />}
+        <CardArt card={card} size="high" className="detail-art" />
         <div>
           {fromPhoto && (
             <span className="matched-pill">

@@ -1,0 +1,29 @@
+.card-art-none {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px;
+  box-sizing: border-box;
+  background: var(--raised);
+  border: 1px dashed var(--border-control);
+  border-radius: inherit;
+  text-align: center;
+}
+
+.card-art-name {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.card-art-note {
+  font-size: 11px;
+  color: var(--muted);
+}
