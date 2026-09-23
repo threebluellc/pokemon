@@ -1,0 +1,256 @@
+.camera {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+.camera-feed {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.camera-chrome {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: calc(var(--safe-top) + 16px) 20px calc(var(--tabbar-height) + 16px);
+}
+
+.camera-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  position: relative;
+  margin-bottom: 14px;
+}
+
+.camera-head h1 {
+  font-size: 22px;
+  color: #fff;
+  text-shadow: 0 1px 8px rgb(0 0 0 / 60%);
+}
+
+.round-button {
+  position: absolute;
+  right: 0;
+  width: var(--touch-min);
+  height: var(--touch-min);
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 45%);
+  border: 1px solid rgb(255 255 255 / 18%);
+  color: #fff;
+}
+
+.round-button-on {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.camera-pill {
+  margin: 0 0 14px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 55%);
+  color: #fff;
+  font-size: 14px;
+}
+
+/* The guide frame. Everything outside it is dimmed by an enormous shadow. */
+.guide {
+  position: relative;
+  width: 78%;
+  max-width: 300px;
+  aspect-ratio: 5 / 7;
+  border-radius: 14px;
+  box-shadow: 0 0 0 9999px rgb(0 0 0 / 55%);
+}
+
+.corner {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border: 3px solid var(--accent);
+}
+
+.corner.tl {
+  top: -2px;
+  left: -2px;
+  border-right: 0;
+  border-bottom: 0;
+  border-radius: 14px 0 0 0;
+}
+
+.corner.tr {
+  top: -2px;
+  right: -2px;
+  border-left: 0;
+  border-bottom: 0;
+  border-radius: 0 14px 0 0;
+}
+
+.corner.bl {
+  bottom: -2px;
+  left: -2px;
+  border-right: 0;
+  border-top: 0;
+  border-radius: 0 0 0 14px;
+}
+
+.corner.br {
+  bottom: -2px;
+  right: -2px;
+  border-left: 0;
+  border-top: 0;
+  border-radius: 0 0 14px 0;
+}
+
+.camera-caption {
+  margin: 16px 0 0;
+  color: rgb(255 255 255 / 80%);
+  font-size: 14px;
+  text-align: center;
+  text-shadow: 0 1px 8px rgb(0 0 0 / 70%);
+}
+
+.camera-toast,
+.camera-error {
+  margin: 14px 0 0;
+  padding: 10px 16px;
+  border-radius: var(--radius-input);
+  background: rgb(0 0 0 / 65%);
+  border: 1px solid rgb(255 255 255 / 18%);
+  color: #fff;
+  font-size: 14px;
+  text-align: center;
+}
+
+.camera-toast strong {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.camera-error {
+  border-color: color-mix(in srgb, #ff8a80 55%, transparent);
+}
+
+.camera-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 320px;
+  margin-top: auto;
+}
+
+.control {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 64px;
+  min-height: var(--touch-min);
+  background: none;
+  border: 0;
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.control input[type='file'] {
+  display: none;
+}
+
+.control-icon {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: rgb(0 0 0 / 50%);
+  border: 1px solid rgb(255 255 255 / 18%);
+}
+
+.control-on .control-icon {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.control-on {
+  color: var(--accent);
+}
+
+.shutter {
+  width: 84px;
+  height: 84px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: none;
+  border: 4px solid #fff;
+  padding: 0;
+}
+
+.shutter:disabled {
+  opacity: 0.5;
+}
+
+.shutter-inner {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.reading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: rgb(0 0 0 / 70%);
+  color: #fff;
+  font-size: 17px;
+}
+
+.spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid rgb(255 255 255 / 25%);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2.4s;
+  }
+}
+
+/* The blocked-camera fallback wraps a hidden file input */
+.file-button {
+  display: block;
+  text-align: center;
+}
+
+.file-button input[type='file'] {
+  display: none;
+}

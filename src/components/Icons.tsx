@@ -78,6 +78,28 @@ export const CheckIcon = () => (
   </Icon>
 )
 
+export const LibraryIcon = () => (
+  <Icon size={22}>
+    <rect x="3.5" y="5.5" width="17" height="13" rx="2.4" />
+    <circle cx="9" cy="10" r="1.6" />
+    <path d="M4 16l4.2-4 3.3 3 2.8-2.4L20 17" />
+  </Icon>
+)
+
+export const StackIcon = () => (
+  <Icon size={22}>
+    <path d="M12 3.5l8 4-8 4-8-4z" />
+    <path d="M4.5 12L12 15.8 19.5 12" />
+    <path d="M4.5 16.3L12 20.1l7.5-3.8" />
+  </Icon>
+)
+
+export const BoltIcon = () => (
+  <Icon size={20}>
+    <path d="M13.5 3L6 13h5l-.5 8L18 11h-5z" />
+  </Icon>
+)
+
 export const CloseIcon = () => (
   <Icon size={20}>
     <path d="M6 6l12 12M18 6L6 18" />

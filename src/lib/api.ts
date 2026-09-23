@@ -1,7 +1,9 @@
 import { db } from './supabase'
 import type { CachedCard, Condition, PortfolioItem, Printing, SearchHit } from './types'
 
-const PROXY_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/tcgdex-proxy`
+const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`
+const PROXY_URL = `${FUNCTIONS_URL}/tcgdex-proxy`
+const IDENTIFY_URL = `${FUNCTIONS_URL}/identify-card`
 
 export class ProxyError extends Error {
   /** Set when the server asked us to wait, e.g. the refresh cooldown. */
@@ -14,13 +16,17 @@ export class ProxyError extends Error {
 
 /** Every TCGdex call goes through the Edge Function; the browser never calls TCGdex. */
 async function callProxy<T>(body: Record<string, unknown>): Promise<T> {
+  return await callFunction<T>(PROXY_URL, body)
+}
+
+async function callFunction<T>(url: string, body: Record<string, unknown>): Promise<T> {
   const { data } = await db().auth.getSession()
   const token = data.session?.access_token
   if (!token) throw new ProxyError('Please sign in again.')
 
   let response: Response
   try {
-    response = await fetch(PROXY_URL, {
+    response = await fetch(url, {
       method: 'POST',
       headers: {
         apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
@@ -41,6 +47,25 @@ async function callProxy<T>(body: Record<string, unknown>): Promise<T> {
     throw new ProxyError(typeof payload?.error === 'string' ? payload.error : 'Something went wrong.')
   }
   return payload as T
+}
+
+export type IdentifyResult = {
+  is_pokemon_card: boolean
+  read?: { name: string; collector_number: string | null; set_name_or_code: string | null }
+  confidence?: number
+  model_used?: string
+  candidates: CachedCard[]
+  scans_used: number
+  scans_limit: number
+  cost_usd: number
+}
+
+/** Sends one downscaled JPEG for reading. The photo is never stored. */
+export async function identifyCard(imageBase64: string): Promise<IdentifyResult> {
+  return await callFunction<IdentifyResult>(IDENTIFY_URL, {
+    image_base64: imageBase64,
+    media_type: 'image/jpeg',
+  })
 }
 
 export async function searchCards(query: string, number?: string): Promise<SearchHit[]> {

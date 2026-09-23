@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './lib/auth'
 import { isConfigured } from './lib/supabase'
 import { PortfolioProvider } from './lib/usePortfolio'
 import { AddCard } from './screens/AddCard'
+import { Camera } from './screens/Camera'
 import { ChooseUsername } from './screens/ChooseUsername'
 import { NotConfigured } from './screens/NotConfigured'
 import { Portfolio } from './screens/Portfolio'
@@ -44,6 +45,7 @@ function Gate() {
     <PortfolioProvider>
       <Routes>
         <Route path="/" element={<Portfolio />} />
+        <Route path="/camera" element={<Camera />} />
         <Route path="/add" element={<AddCard />} />
         <Route path="/profile" element={<Profile />} />
       </Routes>

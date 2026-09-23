@@ -32,7 +32,12 @@ export type SearchHit = {
   image_url: string | null
 }
 
-type SetInfo = { name: string; printedTotal: number | null }
+export type SetInfo = {
+  name: string
+  printedTotal: number | null
+  releaseDate: string | null
+  abbreviation: string | null
+}
 
 // One instance of the function serves many requests, so holding the set list in
 // memory saves a call on nearly every search. Sets change a few times a year.
@@ -49,13 +54,28 @@ async function loadSetIndex() {
   if (setIndex && Date.now() - setIndex.at < SET_INDEX_MAX_AGE_MS) return setIndex
 
   const [allSets, pocketSeries] = await Promise.all([
-    getJson('/sets') as Promise<Array<{ id: string; name: string; cardCount?: { official?: number } }>>,
+    getJson('/sets') as Promise<
+      Array<{
+        id: string
+        name: string
+        cardCount?: { official?: number }
+        releaseDate?: string
+        abbreviation?: { official?: string }
+      }>
+    >,
     // The mobile game's cards share the API but are not real cards, so we drop them.
     getJson('/series/tcgp') as Promise<{ sets?: Array<{ id: string }> }>,
   ])
 
   const sets = new Map<string, SetInfo>()
-  for (const s of allSets) sets.set(s.id, { name: s.name, printedTotal: s.cardCount?.official ?? null })
+  for (const s of allSets) {
+    sets.set(s.id, {
+      name: s.name,
+      printedTotal: s.cardCount?.official ?? null,
+      releaseDate: s.releaseDate ?? null,
+      abbreviation: s.abbreviation?.official ?? null,
+    })
+  }
 
   const pocket = new Set<string>((pocketSeries.sets ?? []).map((s) => s.id))
   setIndex = { at: Date.now(), sets, pocket }
@@ -63,8 +83,14 @@ async function loadSetIndex() {
 }
 
 /** A TCGdex card id is "<setId>-<number>", e.g. "sv10.5b-116". */
-function setIdOf(cardId: string): string {
+export function setIdOf(cardId: string): string {
   return cardId.slice(0, cardId.lastIndexOf('-'))
+}
+
+/** Set details used when ranking candidates. Served from the in-memory index. */
+export async function setMeta(setId: string): Promise<SetInfo | null> {
+  const index = await loadSetIndex()
+  return index.sets.get(setId) ?? null
 }
 
 export async function searchCards(name: string, setFilter?: string, numberFilter?: string): Promise<SearchHit[]> {

@@ -1,20 +1,18 @@
 import { useState, type FormEvent } from 'react'
-import { BackIcon, CheckIcon, SearchIcon } from '../components/Icons'
-import { CardOptions, likeliestPrinting } from '../components/CardOptions'
-import { addToPortfolio, getCards, searchCards } from '../lib/api'
-import { useAuth } from '../lib/auth'
+import { useNavigate } from 'react-router-dom'
+import { ConfirmCard } from '../components/ConfirmCard'
+import { BackIcon, SearchIcon } from '../components/Icons'
+import { getCards, searchCards } from '../lib/api'
 import { usePortfolio } from '../lib/usePortfolio'
-import { cardImage, cardNumber, TYPE_COLORS, type CachedCard, type Condition, type Printing, type SearchHit } from '../lib/types'
+import { cardImage, cardNumber, type CachedCard, type SearchHit } from '../lib/types'
 import '../components/Chips.css'
 import '../components/Form.css'
-import '../components/CardDetailSheet.css'
 import './AddCard.css'
 import './Screen.css'
 
-// Phase 2 adds cards by searching. Phase 3 puts the camera in front of this,
-// with this search kept as the "not this card?" fallback.
+/** Searching for a card by hand: the fallback when the camera cannot read one. */
 export function AddCard() {
-  const { session } = useAuth()
+  const navigate = useNavigate()
   const { reload } = usePortfolio()
   const [query, setQuery] = useState('')
   const [number, setNumber] = useState('')
@@ -55,8 +53,8 @@ export function AddCard() {
   if (chosen) {
     return (
       <ConfirmCard
-        card={chosen}
-        userId={session?.user.id ?? ''}
+        candidates={[chosen]}
+        fromPhoto={false}
         onBack={() => setChosen(null)}
         onAdded={async (message) => {
           await reload()
@@ -69,8 +67,12 @@ export function AddCard() {
 
   return (
     <main className="screen">
-      <h1 className="title">Add a card</h1>
-      <p className="muted subtitle">Search by name, and narrow it down with the collector number.</p>
+      <header className="confirm-top">
+        <button type="button" className="icon-button" onClick={() => navigate('/camera')} aria-label="Back to camera">
+          <BackIcon />
+        </button>
+        <h1 className="confirm-title">Search for a card</h1>
+      </header>
 
       {toast && (
         <button type="button" className="toast" onClick={() => setToast(null)}>
@@ -139,94 +141,6 @@ export function AddCard() {
           </ul>
         </section>
       )}
-    </main>
-  )
-}
-
-function ConfirmCard({
-  card,
-  userId,
-  onBack,
-  onAdded,
-}: {
-  card: CachedCard
-  userId: string
-  onBack: () => void
-  onAdded: (message: string) => Promise<void>
-}) {
-  const [printing, setPrinting] = useState<Printing>(() => likeliestPrinting(card))
-  const [condition, setCondition] = useState<Condition>('NM')
-  const [quantity, setQuantity] = useState(1)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const price = card.prices?.[printing]
-  const image = cardImage(card, 'high')
-
-  async function add() {
-    setBusy(true)
-    setError(null)
-    try {
-      const result = await addToPortfolio(userId, card.card_id, printing, condition, quantity)
-      await onAdded(
-        result.wasAlreadyOwned
-          ? `${card.name}: now ${result.newQuantity} in your portfolio.`
-          : `Added ${card.name} ×${quantity}.`,
-      )
-    } catch (e) {
-      setError(`! ${e instanceof Error ? e.message : 'Could not add that card.'}`)
-      setBusy(false)
-    }
-  }
-
-  return (
-    <main className="screen">
-      <header className="confirm-top">
-        <button type="button" className="icon-button" onClick={onBack} aria-label="Back to search">
-          <BackIcon />
-        </button>
-        <h1 className="confirm-title">Confirm card</h1>
-      </header>
-
-      <div className="detail-header">
-        {image && <img className="detail-art" src={image} alt="" />}
-        <div>
-          <span className="matched-pill">
-            <CheckIcon /> Matched
-          </span>
-          <h2 className="detail-name">{card.name}</h2>
-          <p className="muted">
-            {card.set_name} · {cardNumber(card)}
-          </p>
-          {card.rarity && <p className="muted">{card.rarity}</p>}
-          {card.types.map((type) => (
-            <p className="muted type-line" key={type}>
-              <span className="type-dot" style={{ background: TYPE_COLORS[type] ?? 'var(--muted)' }} />
-              {type}
-            </p>
-          ))}
-        </div>
-      </div>
-
-      {error && (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
-      )}
-
-      <CardOptions
-        card={card}
-        printing={printing}
-        condition={condition}
-        quantity={quantity}
-        onPrinting={setPrinting}
-        onCondition={setCondition}
-        onQuantity={setQuantity}
-      />
-
-      <button type="button" className="button-primary" disabled={busy || price == null} onClick={() => void add()}>
-        {busy ? 'Adding…' : `Add to portfolio · $${((price ?? 0) * quantity).toFixed(2)}`}
-      </button>
     </main>
   )
 }

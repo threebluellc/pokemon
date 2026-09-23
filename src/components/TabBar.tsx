@@ -15,7 +15,7 @@ export function TabBar() {
         <span>Portfolio</span>
       </NavLink>
 
-      <NavLink to="/add" className="tab tab-camera" aria-label="Add a card">
+      <NavLink to="/camera" className="tab tab-camera" aria-label="Scan a card">
         <span className="camera-button">
           <CameraIcon size={28} />
         </span>

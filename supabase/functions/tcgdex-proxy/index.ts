@@ -1,55 +1,17 @@
-// tcgdex-proxy: the only thing allowed to talk to TCGdex.
+// tcgdex-proxy: the only thing allowed to talk to TCGdex for search and prices.
 //
 // Prices are fetched on demand only: when a card is added and has no price yet,
 // or when the person taps Refresh. Nothing expires on a timer and nothing is
 // fetched in the background.
 
-import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2'
-import { fetchCards, searchCards, type CardRow } from './tcgdex.ts'
-
-const ALLOWED_ORIGINS = new Set([
-  'https://threebluellc.github.io',
-  'http://localhost:5173',
-  'http://localhost:4173',
-])
+import { type SupabaseClient } from 'jsr:@supabase/supabase-js@2'
+import { adminClient, callerId, CARD_ID, corsHeaders, getOrFetchCards, json, must } from '../_shared/http.ts'
+import { fetchCards, searchCards } from '../_shared/tcgdex.ts'
 
 /** Most requests to TCGdex per call, so one tap cannot start a flood. */
 const MAX_IDS_PER_CALL = 20
 /** Minutes a person must wait between full price refreshes. */
 const REFRESH_COOLDOWN_MINUTES = 5
-
-const CARD_ID = /^[A-Za-z0-9._-]{2,40}$/
-
-function corsHeaders(origin: string | null): Record<string, string> {
-  const headers: Record<string, string> = {
-    // supabase-js and our own fetch both send `apikey`; the browser refuses the
-    // request unless every header it will send is listed here.
-    'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    Vary: 'Origin',
-  }
-  if (origin && ALLOWED_ORIGINS.has(origin)) headers['Access-Control-Allow-Origin'] = origin
-  return headers
-}
-
-function json(body: unknown, status: number, origin: string | null): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' },
-  })
-}
-
-/**
- * Database calls must never fail quietly: a silent write failure looks exactly
- * like everything working until you notice nothing was saved.
- */
-function must<T>(label: string, result: { data: T; error: unknown }): T {
-  if (result.error) {
-    console.error(`db ${label} failed`, result.error)
-    throw new Error(`db ${label}: ${JSON.stringify(result.error)}`)
-  }
-  return result.data
-}
 
 /** Keeps only well-formed card ids, de-duplicated and capped. */
 function cleanCardIds(input: unknown): string[] {
@@ -68,15 +30,8 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders(origin) })
   if (req.method !== 'POST') return json({ error: 'Use POST.' }, 405, origin)
 
-  const admin = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('SB_SECRET_KEY') ?? '',
-    { auth: { persistSession: false } },
-  )
-
-  const jwt = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '')
-  const { data: auth } = await admin.auth.getUser(jwt)
-  const userId = auth?.user?.id
+  const admin = adminClient()
+  const userId = await callerId(admin, req)
   if (!userId) return json({ error: 'Please sign in again.' }, 401, origin)
 
   let body: Record<string, unknown>
@@ -118,28 +73,10 @@ async function handleSearch(body: Record<string, unknown>, origin: string | null
   return json({ cards: cards.slice(0, 30) }, 200, origin)
 }
 
-/**
- * Cache-first. A card already in the shared cache is returned as-is, however old
- * its price is; only cards we have never seen cost a request. Two people who own
- * the same card share one lookup.
- */
 async function handleGet(admin: SupabaseClient, body: Record<string, unknown>, origin: string | null) {
   const wanted = cleanCardIds(body.card_ids)
   if (wanted.length === 0) return json({ error: 'No card ids given.' }, 400, origin)
-
-  const cached = must('cards_cache select', await admin.from('cards_cache').select('*').in('card_id', wanted))
-  const have = new Set((cached ?? []).map((row) => row.card_id as string))
-  const missing = wanted.filter((id) => !have.has(id))
-
-  let added: CardRow[] = []
-  if (missing.length > 0) {
-    added = await fetchCards(missing)
-    if (added.length > 0) {
-      must('cards_cache upsert', await admin.from('cards_cache').upsert(added, { onConflict: 'card_id' }))
-    }
-  }
-
-  return json({ cards: [...(cached ?? []), ...added] }, 200, origin)
+  return json({ cards: await getOrFetchCards(admin, wanted) }, 200, origin)
 }
 
 /**
@@ -155,11 +92,7 @@ async function handleRefreshBegin(admin: SupabaseClient, userId: string, origin:
   const last = counter?.last_refresh_at ? Date.parse(counter.last_refresh_at as string) : 0
   const waitMs = last + REFRESH_COOLDOWN_MINUTES * 60_000 - Date.now()
   if (waitMs > 0) {
-    return json(
-      { error: 'cooldown', retry_after_seconds: Math.ceil(waitMs / 1000) },
-      429,
-      origin,
-    )
+    return json({ error: 'cooldown', retry_after_seconds: Math.ceil(waitMs / 1000) }, 429, origin)
   }
 
   must(
