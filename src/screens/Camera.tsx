@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ConfirmCard } from '../components/ConfirmCard'
-import { BoltIcon, LibraryIcon, StackIcon } from '../components/Icons'
+import { BoltIcon, CloseIcon, LibraryIcon, StackIcon } from '../components/Icons'
 import { identifyCard, ProxyError } from '../lib/api'
 import { acquireCamera, currentStream, releaseCameraSoon } from '../lib/cameraStream'
 import { captureFromFile, captureFromVideo } from '../lib/image'
+import { setTabBarHidden } from '../lib/tabBarVisibility'
 import type { CachedCard } from '../lib/types'
 import { usePortfolio } from '../lib/usePortfolio'
 import '../components/Form.css'
@@ -31,6 +32,16 @@ export function Camera() {
   const [added, setAdded] = useState(0)
   const [toast, setToast] = useState<string | null>(null)
   const [torch, setTorch] = useState<{ on: boolean } | null>(null)
+
+  // The live view fills the screen, so the tab bar would sit on top of the
+  // shutter. Confirm and the no-camera fallback are ordinary screens and keep it.
+  const fullScreen = stage.name !== 'confirm' && stage.name !== 'blocked'
+  // Layout effect, not a plain one: this runs before the browser paints, so the
+  // tab bar never flashes into view for a frame on the way in or out.
+  useLayoutEffect(() => {
+    setTabBarHidden(fullScreen)
+    return () => setTabBarHidden(false)
+  }, [fullScreen])
 
   useEffect(() => {
     let cancelled = false
@@ -182,6 +193,15 @@ export function Camera() {
 
       <div className="camera-chrome">
         <header className="camera-head">
+          {/* With the tab bar hidden this is the only way out of the camera. */}
+          <button
+            type="button"
+            className="round-button round-button-left"
+            onClick={() => navigate('/')}
+            aria-label="Close the camera"
+          >
+            <CloseIcon />
+          </button>
           <h1>Add a card</h1>
           {torch && (
             <button

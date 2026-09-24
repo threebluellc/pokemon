@@ -91,7 +91,13 @@
   font-weight: 700;
 }
 
+.condition-note {
+  margin: 12px 0 0;
+  font-size: 14px;
+  color: var(--text);
+}
+
 .small {
-  margin-top: 10px;
+  margin-top: 6px;
   font-size: 13px;
 }

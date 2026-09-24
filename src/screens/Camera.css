@@ -1,6 +1,8 @@
 .camera {
   position: fixed;
   inset: 0;
+  /* Above the tab bar's z-index so nothing can show through mid-transition. */
+  z-index: 30;
   overflow: hidden;
   background: #000;
 }
@@ -19,7 +21,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: calc(var(--safe-top) + 16px) 20px calc(var(--tabbar-height) + 16px);
+  /* The tab bar is hidden here, so the controls get that space back. */
+  padding: calc(var(--safe-top) + 16px) 20px calc(var(--safe-bottom) + 24px);
 }
 
 .camera-head {
@@ -29,6 +32,9 @@
   width: 100%;
   position: relative;
   margin-bottom: 14px;
+  /* Room for the round buttons sitting either side of the title. */
+  min-height: var(--touch-min);
+  padding: 0 52px;
 }
 
 .camera-head h1 {
@@ -40,6 +46,8 @@
 .round-button {
   position: absolute;
   right: 0;
+  top: 50%;
+  transform: translateY(-50%);
   width: var(--touch-min);
   height: var(--touch-min);
   display: grid;
@@ -48,6 +56,11 @@
   background: rgb(0 0 0 / 45%);
   border: 1px solid rgb(255 255 255 / 18%);
   color: #fff;
+}
+
+.round-button-left {
+  right: auto;
+  left: 0;
 }
 
 .round-button-on {

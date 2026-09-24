@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { useTabBarHidden } from '../lib/tabBarVisibility'
 import { usePortfolio } from '../lib/usePortfolio'
 import { CameraIcon, PortfolioIcon, ProfileIcon, RefreshIcon } from './Icons'
 import './TabBar.css'
@@ -6,7 +7,12 @@ import './TabBar.css'
 // Three screens (Portfolio, Add, Profile) plus one action (Refresh) after a divider.
 export function TabBar() {
   const { refresh, startRefresh } = usePortfolio()
+  const hidden = useTabBarHidden()
   const { running, done, total } = refresh
+
+  // Unmounted rather than merely invisible, so nothing under the camera can
+  // still be reached by keyboard or a screen reader.
+  if (hidden) return null
 
   return (
     <nav className="tabbar" aria-label="Main">

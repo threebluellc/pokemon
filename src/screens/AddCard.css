@@ -93,6 +93,19 @@
   font-weight: 600;
 }
 
+/* The action stays reachable however tall the card details get. It sits just
+   above the tab bar, and spans the full width by cancelling the screen gutter. */
+.confirm-footer {
+  position: sticky;
+  bottom: var(--tabbar-height);
+  margin-top: 24px;
+  margin-left: calc(-1 * (var(--safe-left) + 20px));
+  margin-right: calc(-1 * (var(--safe-right) + 20px));
+  padding: 14px calc(var(--safe-right) + 20px) 16px calc(var(--safe-left) + 20px);
+  background: var(--bg);
+  border-top: 1px solid var(--border-card);
+}
+
 .candidate-switch {
   display: flex;
   align-items: center;

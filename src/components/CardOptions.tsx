@@ -1,6 +1,15 @@
 import { CONDITIONS, PRINTING_LABELS, PRINTINGS, type CachedCard, type Condition, type Printing } from '../lib/types'
 import './CardOptions.css'
 
+/** What each grade actually means, since the abbreviations give nothing away. */
+const CONDITION_NOTES: Record<Condition, string> = {
+  NM: 'Near Mint — no visible wear',
+  LP: 'Lightly Played — minor edge wear or scuffing',
+  MP: 'Moderately Played — noticeable wear, may have creasing',
+  HP: 'Heavily Played — significant wear, creasing, or scratches',
+  DMG: 'Damaged — bends, tears, water damage, or heavy wear',
+}
+
 /**
  * Printing, condition and quantity pickers. Shared by the add-a-card screen and
  * the detail sheet so both behave identically.
@@ -64,6 +73,11 @@ export function CardOptions({
             </button>
           ))}
         </div>
+        {/* Two separate facts: what the grade you picked means, and the fact
+            that the price does not move with it. */}
+        <p className="condition-note" aria-live="polite">
+          {CONDITION_NOTES[condition]}
+        </p>
         <p className="muted small">Prices are Near Mint market values; we do not adjust them by condition.</p>
       </section>
 

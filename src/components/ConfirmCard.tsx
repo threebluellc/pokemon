@@ -154,15 +154,19 @@ function ConfirmOne({
         onQuantity={setQuantity}
       />
 
-      <button type="button" className="button-primary" disabled={busy || price == null} onClick={() => void add()}>
-        {busy ? 'Adding…' : `Add to portfolio · $${((price ?? 0) * quantity).toFixed(2)}`}
-      </button>
-
       {onManualSearch && (
         <button type="button" className="button-link" onClick={onManualSearch}>
           Not this card? Search manually
         </button>
       )}
+
+      {/* Sticky rather than fixed: it keeps its place in the flow, so it reserves
+          its own space at the end and needs no padding guesswork above it. */}
+      <div className="confirm-footer">
+        <button type="button" className="button-primary" disabled={busy || price == null} onClick={() => void add()}>
+          {busy ? 'Adding…' : `Add to portfolio · $${((price ?? 0) * quantity).toFixed(2)}`}
+        </button>
+      </div>
     </main>
   )
 }
