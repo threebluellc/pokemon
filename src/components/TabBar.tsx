@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { useTabBarHidden } from '../lib/tabBarVisibility'
 import { usePortfolio } from '../lib/usePortfolio'
 import { CameraIcon, PortfolioIcon, ProfileIcon, RefreshIcon } from './Icons'
@@ -9,6 +9,12 @@ export function TabBar() {
   const { refresh, startRefresh } = usePortfolio()
   const hidden = useTabBarHidden()
   const { running, done, total } = refresh
+
+  // Refresh always updates your own cards, wherever you are. That is easy to
+  // misread while a friend's collection fills the screen, so the label says
+  // whose prices are about to change.
+  const viewingFriend = useLocation().pathname.startsWith('/friend/')
+  const idleLabel = viewingFriend ? 'My prices' : 'Refresh'
 
   // Unmounted rather than merely invisible, so nothing under the camera can
   // still be reached by keyboard or a screen reader.
@@ -39,10 +45,10 @@ export function TabBar() {
         className="tab"
         onClick={startRefresh}
         disabled={running}
-        aria-label={running ? `Updating prices, ${done} of ${total}` : 'Refresh prices'}
+        aria-label={running ? `Updating your prices, ${done} of ${total}` : 'Refresh the prices of your own cards'}
       >
         {running ? <ProgressRing done={done} total={total} /> : <RefreshIcon />}
-        <span>{running ? (total === 0 ? '…' : `${done}/${total}`) : 'Refresh'}</span>
+        <span>{running ? (total === 0 ? '…' : `${done}/${total}`) : idleLabel}</span>
       </button>
     </nav>
   )

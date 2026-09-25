@@ -84,6 +84,20 @@
   margin-top: 28px;
 }
 
+/* On a friend's screen, a refresh is about your cards, not the ones on show. */
+.own-refresh {
+  margin-bottom: 18px;
+  padding: 10px 14px;
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border-radius: var(--radius-input);
+}
+
+.own-refresh p {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
 /* Reachable by keyboard and screen readers, invisible on screen. */
 .visually-hidden {
   position: absolute;

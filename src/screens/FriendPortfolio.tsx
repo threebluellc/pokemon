@@ -6,6 +6,7 @@ import { findFriendshipWith, loadFriends, loadPortfolio, removeFriendship } from
 import { useAuth } from '../lib/auth'
 import { formatAsOf, formatMoney, oldestPriceTime, totalValue } from '../lib/portfolio'
 import type { PortfolioItem } from '../lib/types'
+import { usePortfolio } from '../lib/usePortfolio'
 import '../components/Form.css'
 import './Portfolio.css'
 import './Profile.css'
@@ -21,6 +22,7 @@ export function FriendPortfolio() {
   const { friendId = '' } = useParams()
   const navigate = useNavigate()
   const { session } = useAuth()
+  const { refresh, dismissNote } = usePortfolio()
   const myId = session?.user.id ?? ''
 
   const [username, setUsername] = useState<string | null>(null)
@@ -81,6 +83,33 @@ export function FriendPortfolio() {
         </button>
         <h1 className="confirm-title">{username ? `@${username}'s portfolio` : 'Portfolio'}</h1>
       </header>
+
+      {/* Refresh updates your own cards wherever you tap it. Say so plainly
+          here, where someone else's collection is the thing on screen. */}
+      {refresh.running && (
+        <div className="own-refresh" role="status">
+          <p aria-live="polite">
+            {refresh.total === 0
+              ? 'Updating your own prices…'
+              : `Updating your own prices · ${refresh.done} of ${refresh.total} cards`}
+          </p>
+          <div
+            className="progress"
+            role="progressbar"
+            aria-valuenow={refresh.done}
+            aria-valuemin={0}
+            aria-valuemax={refresh.total || 1}
+          >
+            <span style={{ width: `${refresh.total ? (refresh.done / refresh.total) * 100 : 0}%` }} />
+          </div>
+        </div>
+      )}
+
+      {!refresh.running && refresh.note && (
+        <button type="button" className="toast" onClick={dismissNote}>
+          Your own portfolio: {refresh.note} <span aria-hidden="true">✕</span>
+        </button>
+      )}
 
       {error ? (
         <p className="form-error" role="alert">
