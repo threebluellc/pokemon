@@ -7,6 +7,7 @@ import { PortfolioProvider } from './lib/usePortfolio'
 import { AddCard } from './screens/AddCard'
 import { Camera } from './screens/Camera'
 import { ChooseUsername } from './screens/ChooseUsername'
+import { FriendPortfolio } from './screens/FriendPortfolio'
 import { NotConfigured } from './screens/NotConfigured'
 import { Portfolio } from './screens/Portfolio'
 import { Profile } from './screens/Profile'
@@ -48,6 +49,7 @@ function Gate() {
         <Route path="/camera" element={<Camera />} />
         <Route path="/add" element={<AddCard />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/friend/:friendId" element={<FriendPortfolio />} />
       </Routes>
       <InstallHint />
       <TabBar />

@@ -3,12 +3,14 @@ import { cardNumber, PRINTING_LABELS, type PortfolioItem } from '../lib/types'
 import { CardArt } from './CardArt'
 import './CardTile.css'
 
-export function CardTile({ item, onOpen }: { item: PortfolioItem; onOpen: () => void }) {
+/** Without `onOpen` the tile is plain content: a friend's cards are read-only. */
+export function CardTile({ item, onOpen }: { item: PortfolioItem; onOpen?: () => void }) {
   const card = item.card
   const price = priceOf(item)
+  const Wrapper = onOpen ? 'button' : 'div'
 
   return (
-    <button type="button" className="tile" onClick={onOpen}>
+    <Wrapper type={onOpen ? 'button' : undefined} className="tile" onClick={onOpen}>
       <span className="tile-art">
         <CardArt card={card} size="low" />
       </span>
@@ -28,6 +30,6 @@ export function CardTile({ item, onOpen }: { item: PortfolioItem; onOpen: () => 
         <span className="tile-price">{price == null ? 'No price' : `$${price.toFixed(2)}`}</span>
         <span className="tile-qty">Qty {item.quantity}</span>
       </span>
-    </button>
+    </Wrapper>
   )
 }

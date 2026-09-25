@@ -51,6 +51,17 @@ export function formatAsOf(iso: string | null): string {
   return `${when.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}, ${time}`
 }
 
+/** Just the day, for the narrow stat tile: "Today", "Yesterday", "12 Sep". */
+export function formatAsOfDay(iso: string | null): string {
+  if (!iso) return '—'
+  const when = new Date(iso)
+  const midnight = new Date()
+  midnight.setHours(0, 0, 0, 0)
+  if (when >= midnight) return 'Today'
+  if (when.getTime() >= midnight.getTime() - 86_400_000) return 'Yesterday'
+  return when.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })
+}
+
 export type SortKey = 'value' | 'name' | 'newest'
 
 export type Filters = {

@@ -80,6 +80,10 @@
   text-align: center;
 }
 
+.unfriend {
+  margin-top: 28px;
+}
+
 /* Reachable by keyboard and screen readers, invisible on screen. */
 .visually-hidden {
   position: absolute;

@@ -163,3 +163,83 @@ export async function removeItem(itemId: string): Promise<void> {
   const { error } = await db().from('portfolio_items').delete().eq('id', itemId)
   if (error) throw new Error(error.message)
 }
+
+// ---------------------------------------------------------------- friends
+
+export type FriendSummary = { friend_id: string; username: string; card_count: number; total_value: number }
+
+export type FriendRequest = {
+  friendship_id: string
+  other_id: string
+  username: string
+  direction: 'incoming' | 'outgoing'
+  created_at: string
+}
+
+/** Accepted friends only, with their card count and total. */
+export async function loadFriends(): Promise<FriendSummary[]> {
+  const { data, error } = await db().rpc('friend_summaries')
+  if (error) throw new Error(error.message)
+  return (data ?? []) as FriendSummary[]
+}
+
+/** Requests waiting on someone: sent to you, and sent by you. */
+export async function loadFriendRequests(): Promise<FriendRequest[]> {
+  const { data, error } = await db().rpc('friend_requests')
+  if (error) throw new Error(error.message)
+  return (data ?? []) as FriendRequest[]
+}
+
+/**
+ * Sends a request to whoever holds this exact username.
+ * The lookup is a database function: it answers only exact matches and returns
+ * nothing but an id and a username, so the app cannot browse who else exists.
+ */
+export async function sendFriendRequest(myId: string, username: string): Promise<string> {
+  const target = username.trim().toLowerCase()
+  if (target.length < 3) throw new Error('Type the full username.')
+
+  const { data, error } = await db().rpc('find_profile_by_username', { p_username: target })
+  if (error) throw new Error(error.message)
+
+  const found = ((data ?? []) as Array<{ id: string; username: string }>)[0]
+  if (!found) throw new Error(`No one is using the username "${target}".`)
+  if (found.id === myId) throw new Error('That is your own username.')
+
+  const { error: insertError } = await db()
+    .from('friendships')
+    .insert({ requester_id: myId, addressee_id: found.id, status: 'pending' })
+
+  if (insertError) {
+    // 23505: the one-row-per-pair index already holds a request either way round.
+    throw new Error(
+      insertError.code === '23505'
+        ? `You and @${found.username} already have a request or a friendship.`
+        : insertError.message,
+    )
+  }
+  return found.username
+}
+
+/** Only the person who received the request may do this; RLS enforces it. */
+export async function acceptFriendRequest(friendshipId: string): Promise<void> {
+  const { error } = await db().from('friendships').update({ status: 'accepted' }).eq('id', friendshipId)
+  if (error) throw new Error(error.message)
+}
+
+/** Declining, cancelling and unfriending are all the same row going away. */
+export async function removeFriendship(friendshipId: string): Promise<void> {
+  const { error } = await db().from('friendships').delete().eq('id', friendshipId)
+  if (error) throw new Error(error.message)
+}
+
+/** Finds the friendship row joining you to this person, for the unfriend button. */
+export async function findFriendshipWith(myId: string, otherId: string): Promise<string | null> {
+  const { data, error } = await db()
+    .from('friendships')
+    .select('id, requester_id, addressee_id')
+    .or(`and(requester_id.eq.${myId},addressee_id.eq.${otherId}),and(requester_id.eq.${otherId},addressee_id.eq.${myId})`)
+    .maybeSingle()
+  if (error) throw new Error(error.message)
+  return (data?.id as string | undefined) ?? null
+}

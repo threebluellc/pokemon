@@ -100,6 +100,12 @@ export const BoltIcon = () => (
   </Icon>
 )
 
+export const ChevronIcon = () => (
+  <Icon size={20}>
+    <path d="M9 5l7 7-7 7" />
+  </Icon>
+)
+
 export const CloseIcon = () => (
   <Icon size={20}>
     <path d="M6 6l12 12M18 6L6 18" />

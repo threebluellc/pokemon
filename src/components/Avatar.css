@@ -1,0 +1,19 @@
+.avatar {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.avatar-mine {
+  width: 56px;
+  height: 56px;
+  font-size: 24px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
